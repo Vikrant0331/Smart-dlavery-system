@@ -1,0 +1,29 @@
+# Node dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Production build outputs
+frontend/dist/
+dist/
+build/
+
+# Credentials and environment secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
+
+# Local databases and logs
+*.log
+backend/database.sqlite
+.eslintcache
+
+# System & Editor configuration
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
