@@ -5,11 +5,29 @@ import {
   Store, Layers, TrendingUp, Compass
 } from 'lucide-react';
 
-const Navbar = ({ cart = [], user, onLogout }) => {
+const Navbar = ({ cart = [], user, onLogout, notifications = [], setNotifications }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const showCart = location.pathname.includes('/customer');
   const showAuth = !isHomePage;
+
+  const roleNotifications = user ? notifications.filter(n => n.role === user.role && !n.read) : [];
+  const unreadCount = roleNotifications.length;
+
+  const handleShowNotifications = () => {
+    if (!user) return;
+    const userNotifications = notifications.filter(n => n.role === user.role);
+    if (userNotifications.length === 0) {
+      alert('🔔 Notifications: No alerts.');
+      return;
+    }
+
+    const messages = userNotifications.map((n, i) => `${i + 1}. ${n.message}\n   (${n.details || ''})`).join('\n\n');
+    alert(`🔔 Your Notifications:\n\n${messages}`);
+
+    // Mark all as read
+    setNotifications(prev => prev.map(n => n.role === user.role ? { ...n, read: true } : n));
+  };
 
   return (
     <nav className="navbar glass">
@@ -32,10 +50,15 @@ const Navbar = ({ cart = [], user, onLogout }) => {
         
         {showAuth && (user ? (
           <div className="profile-menu-container">
-            <button className="profile-trigger-btn">
+            <button className="profile-trigger-btn" style={{ position: 'relative' }}>
               <span>👤 {user.name || 'User'}</span>
               <span style={{ color: 'var(--primary)', textTransform: 'uppercase', fontSize: '0.7rem' }}>({user.role})</span>
               <ChevronDown size={14} style={{ opacity: 0.7 }} />
+              {unreadCount > 0 && (
+                <span style={{ position: 'absolute', top: '-6px', right: '-6px', backgroundColor: 'var(--danger)', color: 'white', fontSize: '0.65rem', fontWeight: 'bold', minWidth: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2px', border: '2px solid var(--background)' }}>
+                  {unreadCount}
+                </span>
+              )}
             </button>
             <div className="profile-dropdown-card">
               {user.role === 'customer' && (
@@ -65,9 +88,9 @@ const Navbar = ({ cart = [], user, onLogout }) => {
                     <Heart size={16} color="var(--secondary)" />
                     <span>Wishlist</span>
                   </button>
-                  <button onClick={() => alert('🔔 Notifications: No new alerts.')} className="dropdown-menu-item">
+                  <button onClick={handleShowNotifications} className="dropdown-menu-item">
                     <Bell size={16} color="var(--accent)" />
-                    <span>Notifications</span>
+                    <span>Notifications {unreadCount > 0 && `(${unreadCount})`}</span>
                   </button>
                 </>
               )}
@@ -95,9 +118,9 @@ const Navbar = ({ cart = [], user, onLogout }) => {
                     <TrendingUp size={16} color="var(--success)" />
                     <span>Sales & Analytics</span>
                   </button>
-                  <button onClick={() => alert('🔔 Notifications: No new orders yet.')} className="dropdown-menu-item">
+                  <button onClick={handleShowNotifications} className="dropdown-menu-item">
                     <Bell size={16} color="var(--accent)" />
-                    <span>Notifications</span>
+                    <span>Notifications {unreadCount > 0 && `(${unreadCount})`}</span>
                   </button>
                 </>
               )}
@@ -121,9 +144,9 @@ const Navbar = ({ cart = [], user, onLogout }) => {
                     <TrendingUp size={16} color="var(--success)" />
                     <span>Rider Earnings</span>
                   </button>
-                  <button onClick={() => alert('🔔 Notifications: No new routes assigned.')} className="dropdown-menu-item">
+                  <button onClick={handleShowNotifications} className="dropdown-menu-item">
                     <Bell size={16} color="var(--accent)" />
-                    <span>Notifications</span>
+                    <span>Notifications {unreadCount > 0 && `(${unreadCount})`}</span>
                   </button>
                 </>
               )}

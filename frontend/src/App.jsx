@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -98,6 +98,16 @@ function App() {
     }
   ]);
 
+  // Shared notifications state
+  const [notifications, setNotifications] = useState(() => {
+    const savedNotifications = localStorage.getItem('notifications');
+    return savedNotifications ? JSON.parse(savedNotifications) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+  }, [notifications]);
+
   const handleLogin = (user) => {
     setCurrentUser(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
@@ -113,7 +123,7 @@ function App() {
   return (
     <Router>
       <div className="app-wrapper">
-        <Navbar cart={cart} user={currentUser} onLogout={handleLogout} />
+        <Navbar cart={cart} user={currentUser} onLogout={handleLogout} notifications={notifications} setNotifications={setNotifications} />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={
@@ -124,18 +134,18 @@ function App() {
           } />
           
           <Route path="/customer" element={
-            <CustomerDashboard cart={cart} setCart={setCart} products={products} orders={orders} setOrders={setOrders} user={currentUser} onLogout={handleLogout} />
+            <CustomerDashboard cart={cart} setCart={setCart} products={products} orders={orders} setOrders={setOrders} user={currentUser} onLogout={handleLogout} notifications={notifications} setNotifications={setNotifications} />
           } />
           
           <Route path="/shopkeeper" element={
             <ProtectedRoute allowedRole="shopkeeper" user={currentUser}>
-              <ShopkeeperDashboard products={products} setProducts={setProducts} orders={orders} setOrders={setOrders} user={currentUser} onLogout={handleLogout} />
+              <ShopkeeperDashboard products={products} setProducts={setProducts} orders={orders} setOrders={setOrders} user={currentUser} onLogout={handleLogout} notifications={notifications} setNotifications={setNotifications} />
             </ProtectedRoute>
           } />
           
           <Route path="/rider" element={
             <ProtectedRoute allowedRole="rider" user={currentUser}>
-              <RiderDashboard user={currentUser} onLogout={handleLogout} />
+              <RiderDashboard user={currentUser} onLogout={handleLogout} orders={orders} setOrders={setOrders} notifications={notifications} setNotifications={setNotifications} />
             </ProtectedRoute>
           } />
         </Routes>

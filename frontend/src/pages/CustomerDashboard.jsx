@@ -83,7 +83,7 @@ const trendingSearches = [
   { text: 'Mac Retro Matte Lipstick', icon: '💄' }
 ];
 
-const CustomerDashboard = ({ cart, setCart, products = [], orders = [], setOrders, user, onLogout }) => {
+const CustomerDashboard = ({ cart, setCart, products = [], orders = [], setOrders, user, onLogout, notifications = [], setNotifications }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'Home');
@@ -237,16 +237,21 @@ const CustomerDashboard = ({ cart, setCart, products = [], orders = [], setOrder
       setShowUPIModal(false);
       setPaymentSuccess(false);
 
+      const targetStoreName = selectedProductForBuy.store || (cart.length > 0 ? cart[0].store : 'Organic Farms');
+      const targetStoreAddress = selectedProductForBuy.storeAddress || (cart.length > 0 ? cart[0].storeAddress : 'Sector 45, Noida, UP');
+
       // Create new order entry in global orders
       const newOrder = {
         id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-        customer: 'John Doe (You)',
+        customer: user?.name || 'Customer (You)',
         address: customerLocation,
         items: selectedProductForBuy.name.includes('Cart Items') 
           ? cart.map(c => c.name).join(', ') 
           : selectedProductForBuy.name,
         total: selectedProductForBuy.price,
         status: 'Placed',
+        store: targetStoreName,
+        storeAddress: targetStoreAddress,
         riderName: 'Vikram Singh',
         riderPhone: '+91 98765 43210',
         time: 'Just now',
@@ -254,6 +259,33 @@ const CustomerDashboard = ({ cart, setCart, products = [], orders = [], setOrder
       };
 
       setOrders(prev => [newOrder, ...prev]);
+
+      // Add notifications for Customer, Shopkeeper, and Rider
+      const customerNotif = {
+        id: Date.now(),
+        role: 'customer',
+        message: `🎉 Order placed successfully! Tracking ID: ${newOrder.id}`,
+        details: `Items: ${newOrder.items} • Total: ${newOrder.total} • Deliver to: ${newOrder.address}`,
+        read: false
+      };
+
+      const shopkeeperNotif = {
+        id: Date.now() + 1,
+        role: 'shopkeeper',
+        message: `🏪 New Order received for your store "${newOrder.store}"!`,
+        details: `Order ID: ${newOrder.id} • Items: ${newOrder.items} • Delivery: ${newOrder.address}`,
+        read: false
+      };
+
+      const riderNotif = {
+        id: Date.now() + 2,
+        role: 'rider',
+        message: `🛵 New delivery job available nearby!`,
+        details: `Job ID: ${newOrder.id} • Pickup: ${newOrder.store} (${newOrder.storeAddress}) ➔ Deliver: ${newOrder.address}`,
+        read: false
+      };
+
+      setNotifications(prev => [customerNotif, shopkeeperNotif, riderNotif, ...prev]);
 
       if (selectedProductForBuy.name.includes('Cart Items')) {
         setCart([]);
@@ -749,6 +781,27 @@ const CustomerDashboard = ({ cart, setCart, products = [], orders = [], setOrder
                         })}
                       </div>
                     </div>
+
+                    {/* Live Tracking Map */}
+                    {order.status !== 'Delivered' && (
+                      <div style={{ marginTop: '1.5rem', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', height: '220px' }}>
+                        <div style={{ padding: '0.5rem 1rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '600', color: '#334155' }}>
+                          <span>🗺️ Live Delivery Map Route</span>
+                          <span style={{ color: '#16a34a', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }}></span>
+                            Rider is en route
+                          </span>
+                        </div>
+                        <iframe 
+                          title={`Tracking Map ${order.id}`}
+                          width="100%" 
+                          height="100%" 
+                          style={{ border: 0 }}
+                          loading="lazy"
+                          src={`https://maps.google.com/maps?q=${encodeURIComponent(order.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                        ></iframe>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -872,8 +925,20 @@ const CustomerDashboard = ({ cart, setCart, products = [], orders = [], setOrder
                 required
                 className="upi-modal-input"
                 autoFocus
-                style={{ marginBottom: '1.25rem' }}
+                style={{ marginBottom: '1rem' }}
               />
+              {tempLocation.trim().length > 3 && (
+                <div style={{ width: '100%', height: '180px', borderRadius: '8px', overflow: 'hidden', marginBottom: '1.25rem', border: '1px solid rgba(0,0,0,0.1)' }}>
+                  <iframe 
+                    title="Google Location Preview"
+                    width="100%" 
+                    height="100%" 
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(tempLocation)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                  ></iframe>
+                </div>
+              )}
               <button className="upi-modal-pay-btn" type="submit" style={{ backgroundColor: 'var(--success)', borderColor: 'var(--success)', color: '#0f172a', fontWeight: 'bold' }}>
                 Set Address
               </button>

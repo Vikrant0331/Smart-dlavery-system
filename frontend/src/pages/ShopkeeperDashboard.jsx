@@ -21,7 +21,7 @@ const modalPresets = [
   { name: 'Organic Hair Serum', price: '649', image: '🧴' }
 ];
 
-const ShopkeeperDashboard = ({ products = [], setProducts, orders = [], setOrders, user, onLogout }) => {
+const ShopkeeperDashboard = ({ products = [], setProducts, orders = [], setOrders, user, onLogout, notifications = [], setNotifications }) => {
   // Shop Name & Address States
   const [shopName, setShopName] = useState('Organic Farms');
   const [shopAddress, setShopAddress] = useState('Sector 45, Noida, UP');
@@ -61,6 +61,21 @@ const ShopkeeperDashboard = ({ products = [], setProducts, orders = [], setOrder
     }
   }, [searchParams]);
   const simulationTimers = useRef({});
+
+  // Show unread shopkeeper notifications via toast on mount/change
+  useEffect(() => {
+    if (!user) return;
+    const unreadShopkeeperNotifs = notifications.filter(n => n.role === 'shopkeeper' && !n.read);
+    if (unreadShopkeeperNotifs.length > 0) {
+      unreadShopkeeperNotifs.forEach((notif, idx) => {
+        setTimeout(() => {
+          showToastMessage(`🔔 Shop Alert: ${notif.message}`);
+        }, idx * 1000);
+      });
+      // Mark as read
+      setNotifications(prev => prev.map(n => n.role === 'shopkeeper' ? { ...n, read: true } : n));
+    }
+  }, [notifications, user]);
 
   // Display Toast
   const showToastMessage = (message) => {
@@ -117,6 +132,7 @@ const ShopkeeperDashboard = ({ products = [], setProducts, orders = [], setOrder
       image: finalImage,
       category: 'Store Product',
       store: shopName, // Dynamic store name
+      storeAddress: shopAddress, // Dynamic store address
       active: true
     };
 
@@ -140,6 +156,7 @@ const ShopkeeperDashboard = ({ products = [], setProducts, orders = [], setOrder
       image: preset.image,
       category: preset.category,
       store: shopName, // Dynamic store name
+      storeAddress: shopAddress, // Dynamic store address
       active: true
     };
 
@@ -270,6 +287,18 @@ const ShopkeeperDashboard = ({ products = [], setProducts, orders = [], setOrder
                   style={{ width: '280px' }}
                 />
               </div>
+              {tempShopAddress.trim().length > 3 && (
+                <div style={{ width: '100%', maxWidth: '380px', height: '140px', borderRadius: '8px', overflow: 'hidden', marginTop: '0.25rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <iframe 
+                    title="Shop Location Preview"
+                    width="100%" 
+                    height="100%" 
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(tempShopAddress)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                  ></iframe>
+                </div>
+              )}
               <div style={{ display: 'flex', gap: '0.4rem' }}>
                 <button onClick={handleSaveShopName} className="btn-save-shop">Save Profile</button>
                 <button onClick={() => setIsEditingShopName(false)} className="btn-cancel-shop">Cancel</button>
